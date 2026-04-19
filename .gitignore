@@ -1,0 +1,24 @@
+# Ignorar arquivos do macOS
+.DS_Store
+
+# Ignorar ambientes virtuais
+.venv/
+venv/
+env/
+
+# Ignorar pastas de cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignorar diretórios do Node/Next.js (pro frontend depois)
+node_modules/
+.next/
+
+# Ignorar chaves do backend
+backend/.env
+backend/serviceAccount.json
+
+# Ignorar diretórios da IDE
+.vscode/
+.idea/
