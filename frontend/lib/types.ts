@@ -2,19 +2,26 @@
 // Sempre atualizar junto com qualquer mudança no contrato REST.
 
 export interface CycleSetup {
-  strain_name: string;
-  start_date: string;
-  tent_dimensions: string;
-  light_model: string;
+  tent_height_cm: number;
+  tent_width_cm: number;
+  tent_depth_cm: number;
+  light_watts: number;
+  photoperiod_on_hours: number;
   substrate: string;
-  nutrients: string;
+  pot: string;
+  nutrient_line: string;
+  runoff_target_ec_min: number;
+  runoff_target_ec_max: number;
 }
 
 export interface Cycle {
-  id: string;
-  setup: CycleSetup;
+  cycle_id: string;
+  strain: string;
+  start_date: string;
+  flip_date: string;
   status: "active" | "completed" | "paused";
-  created_at: string;
+  updated_at: string;
+  setup: CycleSetup;
 }
 
 export interface IrrigationLog {

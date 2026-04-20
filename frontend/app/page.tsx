@@ -66,12 +66,12 @@ export default function HomePage() {
           </div>
           <div>
             <h1 className="font-bold text-lg text-bark-50">
-              {cycle?.setup.strain_name ?? "Ciclo Ativo"}
+              {cycle?.strain ?? "Ciclo Ativo"}
             </h1>
             <p className="text-xs text-bark-400">
               Iniciado em{" "}
-              {cycle?.created_at
-                ? new Date(cycle.created_at).toLocaleDateString("pt-BR")
+              {cycle?.start_date
+                ? new Date(cycle.start_date).toLocaleDateString("pt-BR")
                 : "—"}
             </p>
           </div>
@@ -81,13 +81,15 @@ export default function HomePage() {
           <div className="rounded-lg bg-bark-800/50 p-3">
             <p className="text-bark-400 text-xs mb-1">Tenda</p>
             <p className="text-bark-100 font-medium">
-              {cycle?.setup.tent_dimensions ?? "—"}
+              {cycle?.setup
+                ? `${cycle.setup.tent_width_cm}×${cycle.setup.tent_depth_cm}×${cycle.setup.tent_height_cm} cm`
+                : "—"}
             </p>
           </div>
           <div className="rounded-lg bg-bark-800/50 p-3">
             <p className="text-bark-400 text-xs mb-1">Iluminação</p>
             <p className="text-bark-100 font-medium">
-              {cycle?.setup.light_model ?? "—"}
+              {cycle?.setup ? `${cycle.setup.light_watts}W / ${cycle.setup.photoperiod_on_hours}h` : "—"}
             </p>
           </div>
           <div className="rounded-lg bg-bark-800/50 p-3">
@@ -99,7 +101,7 @@ export default function HomePage() {
           <div className="rounded-lg bg-bark-800/50 p-3">
             <p className="text-bark-400 text-xs mb-1">Nutrientes</p>
             <p className="text-bark-100 font-medium">
-              {cycle?.setup.nutrients ?? "—"}
+              {cycle?.setup.nutrient_line ?? "—"}
             </p>
           </div>
         </div>
