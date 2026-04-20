@@ -1,0 +1,21 @@
+{
+  "name": "Coach de Cultivo",
+  "short_name": "Coach",
+  "description": "Assistente de cultivo indoor de cannabis medicinal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#21160a",
+  "theme_color": "#072108",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
