@@ -25,6 +25,18 @@ def get_active_cycle():
     return jsonify(cycle), 200
 
 
+@cycles_bp.route("/<cycle_id>/logs", methods=["GET"])
+@require_api_token
+def list_logs(cycle_id):
+    db = FirebaseService.get().db
+    docs = (
+        db.collection("cycles").document(cycle_id).collection("logs")
+        .order_by("day", direction="DESCENDING")
+        .stream()
+    )
+    return jsonify([d.to_dict() for d in docs]), 200
+
+
 @cycles_bp.route("/logs", methods=["POST"])
 @require_api_token
 def create_log():

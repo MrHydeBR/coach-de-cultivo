@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -28,7 +29,22 @@ export default function RootLayout({
                 Coach de Cultivo
               </span>
             </div>
-            <span className="text-xs text-bark-400 font-mono">v0.1</span>
+            <nav className="flex items-center gap-1">
+              <Link
+                href="/"
+                className="px-3 py-1.5 rounded-lg text-sm text-bark-300 hover:text-bark-50 hover:bg-bark-800 transition-colors"
+                aria-label="Ir para página inicial"
+              >
+                Início
+              </Link>
+              <Link
+                href="/history"
+                className="px-3 py-1.5 rounded-lg text-sm text-bark-300 hover:text-bark-50 hover:bg-bark-800 transition-colors"
+                aria-label="Ver histórico de regas"
+              >
+                Histórico
+              </Link>
+            </nav>
           </div>
         </header>
 
