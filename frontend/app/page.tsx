@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { getActiveCycle } from "@/lib/api";
 import { Cycle } from "@/lib/types";
 import { Leaf, AlertCircle, Loader2 } from "lucide-react";
+import LogForm from "@/components/LogForm";
 
 export default function HomePage() {
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showLogForm, setShowLogForm] = useState(false);
 
   useEffect(() => {
     getActiveCycle()
@@ -116,12 +118,19 @@ export default function HomePage() {
           className="mt-4 w-full py-3 rounded-lg bg-canopy-600 hover:bg-canopy-500 text-white font-semibold transition-colors"
           tabIndex={0}
           aria-label="Registrar rega do dia"
-          onClick={() => alert("Em breve: tela de registro de rega!")}
-          onKeyDown={(e) => e.key === "Enter" && alert("Em breve!")}
+          onClick={() => setShowLogForm(true)}
+          onKeyDown={(e) => e.key === "Enter" && setShowLogForm(true)}
         >
           Registrar Rega + Foto
         </button>
       </div>
+
+      {showLogForm && cycle && (
+        <LogForm
+          cycleId={cycle.cycle_id}
+          onClose={() => setShowLogForm(false)}
+        />
+      )}
     </div>
   );
 }

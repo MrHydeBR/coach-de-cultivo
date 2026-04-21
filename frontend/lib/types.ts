@@ -25,27 +25,46 @@ export interface Cycle {
 }
 
 export interface IrrigationLog {
-  id: string;
-  cycle_id: string;
-  logged_at: string;
-  water_ml: number;
-  runoff_ppm?: number;
-  feed_ppm?: number;
+  doc_id: string;
+  day: number;
+  date: string;
+  phase: "veg" | "flower";
+  ph_in: number;
+  ec_in: number;
+  volume_ml: number;
+  runoff_ph?: number | null;
+  runoff_ec?: number | null;
   notes?: string;
-  photo_url?: string;
+  photo_url?: string | null;
+  created_at: string;
+}
+
+export interface LogInput {
+  cycle_id: string;
+  date: string;
+  ph_in: number;
+  ec_in: number;
+  volume_ml: number;
+  runoff_ph?: number;
+  runoff_ec?: number;
+  notes?: string;
+}
+
+export interface CoachAlert {
+  code: string;
+  severity: "info" | "warning" | "danger";
+  message: string;
+  actions_24h: string[];
+  actions_5d: string[];
 }
 
 export interface CoachDiagnosis {
-  visual_summary?: string;
-  alerts: Alert[];
-  actions_24h: string[];
-  actions_3_5d: string[];
-  yield_estimate_g?: number;
-}
-
-export interface Alert {
-  severity: "info" | "warning" | "danger";
-  message: string;
+  cycle_id: string;
+  log_day: number;
+  log_date: string;
+  phase: "veg" | "flower";
+  alerts: CoachAlert[];
+  generated_at: string;
 }
 
 export interface ApiError {
