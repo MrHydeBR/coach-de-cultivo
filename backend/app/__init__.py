@@ -4,12 +4,14 @@ from app.config import Config
 from app.utils.error_handlers import register_error_handlers
 from app.blueprints.cycles_routes import cycles_bp
 from app.services.firebase_service import FirebaseService
+from app.services.gemini_provider import GeminiProvider
 
 def create_app():
     app = Flask(__name__)
     config = Config.from_env()
 
     FirebaseService.init()
+    GeminiProvider.init(config.gemini_api_key, config.gemini_model_text, config.gemini_model_vision)
     
     # Configurar CORS permitindo apenas origens especificadas no .env
     # Se CORS_ORIGINS for '*', permite tudo (útil para dev)

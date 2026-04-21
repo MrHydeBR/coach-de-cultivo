@@ -1,8 +1,12 @@
+import base64
+import json
 from datetime import date, datetime
 from flask import Blueprint, jsonify, request
 from app.auth import require_api_token
 from app.services.firebase_service import FirebaseService
+from app.services.gemini_provider import GeminiProvider
 from coach.rules import check_log
+from coach.prompts.vision_prompt import build_vision_prompt
 
 cycles_bp = Blueprint("cycles", __name__, url_prefix="/cycles")
 
@@ -125,3 +129,43 @@ def coach_today():
         "generated_at": datetime.utcnow().isoformat(),
     }
     return jsonify(report), 200
+
+
+@cycles_bp.route("/coach/vision", methods=["POST"])
+@require_api_token
+def analyze_vision():
+    body = request.get_json(silent=True) or {}
+    cycle_id = body.get("cycle_id")
+    doc_id = body.get("doc_id")
+    photo_b64 = body.get("photo_b64")
+    mime_type = body.get("mime_type", "image/jpeg")
+
+    if not all([cycle_id, doc_id, photo_b64]):
+        return jsonify({"error": "Bad Request", "message": "cycle_id, doc_id and photo_b64 required"}), 400
+
+    db = FirebaseService.get().db
+
+    cycle_doc = db.collection("cycles").document(cycle_id).get()
+    if not cycle_doc.exists:
+        return jsonify({"error": "Not Found", "message": f"Cycle {cycle_id} not found"}), 404
+
+    log_doc = db.collection("cycles").document(cycle_id).collection("logs").document(doc_id).get()
+    if not log_doc.exists:
+        return jsonify({"error": "Not Found", "message": f"Log {doc_id} not found"}), 404
+
+    prompt = build_vision_prompt(log_doc.to_dict(), cycle_doc.to_dict())
+    image_bytes = base64.b64decode(photo_b64)
+    response = GeminiProvider.get().analyze_photo(image_bytes, prompt, mime_type)
+
+    try:
+        result = json.loads(response.text)
+    except Exception:
+        result = {"visual_summary": response.text, "issues": [], "positives": []}
+
+    db.collection("cycles").document(cycle_id).collection("logs").document(doc_id).update({
+        "coach_report.visual_summary": result.get("visual_summary", ""),
+        "coach_report.issues": result.get("issues", []),
+        "coach_report.positives": result.get("positives", []),
+    })
+
+    return jsonify(result), 200

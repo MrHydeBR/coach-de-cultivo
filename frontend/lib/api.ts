@@ -1,6 +1,6 @@
 // Cliente REST centralizado. Nunca usar fetch diretamente em componentes.
 
-import { Cycle, IrrigationLog, LogInput, CoachDiagnosis } from "./types";
+import { Cycle, IrrigationLog, LogInput, CoachDiagnosis, VisionResult } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080";
 const TOKEN = process.env.NEXT_PUBLIC_API_TOKEN ?? "";
@@ -39,6 +39,18 @@ export function createLog(data: LogInput): Promise<IrrigationLog> {
   return apiFetch<IrrigationLog>("/cycles/logs", {
     method: "POST",
     body: JSON.stringify(data),
+  });
+}
+
+export function analyzePhoto(
+  cycleId: string,
+  docId: string,
+  photoB64: string,
+  mimeType: string
+): Promise<VisionResult> {
+  return apiFetch<VisionResult>("/cycles/coach/vision", {
+    method: "POST",
+    body: JSON.stringify({ cycle_id: cycleId, doc_id: docId, photo_b64: photoB64, mime_type: mimeType }),
   });
 }
 

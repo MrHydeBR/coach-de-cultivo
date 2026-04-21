@@ -67,6 +67,12 @@ export interface CoachDiagnosis {
   generated_at: string;
 }
 
+export interface VisionResult {
+  visual_summary: string;
+  issues: string[];
+  positives: string[];
+}
+
 export interface ApiError {
   error: string;
   message: string;
