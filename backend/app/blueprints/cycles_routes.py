@@ -2,6 +2,7 @@ from datetime import date, datetime
 from flask import Blueprint, jsonify, request
 from app.auth import require_api_token
 from app.services.firebase_service import FirebaseService
+from coach.rules import check_log
 
 cycles_bp = Blueprint("cycles", __name__, url_prefix="/cycles")
 
@@ -65,3 +66,50 @@ def create_log():
 
     db.collection("cycles").document(cycle_id).collection("logs").document(doc_id).set(log, merge=True)
     return jsonify({"doc_id": doc_id, **log}), 201
+
+
+@cycles_bp.route("/coach/today", methods=["GET"])
+@require_api_token
+def coach_today():
+    cycle_id = request.args.get("cycle_id")
+    if not cycle_id:
+        return jsonify({"error": "Bad Request", "message": "cycle_id required"}), 400
+
+    db = FirebaseService.get().db
+
+    cycle_doc = db.collection("cycles").document(cycle_id).get()
+    if not cycle_doc.exists:
+        return jsonify({"error": "Not Found", "message": f"Cycle {cycle_id} not found"}), 404
+
+    cycle = cycle_doc.to_dict()
+
+    logs = list(
+        db.collection("cycles").document(cycle_id).collection("logs")
+        .order_by("day", direction="DESCENDING")
+        .limit(1)
+        .stream()
+    )
+    if not logs:
+        return jsonify({"error": "Not Found", "message": "No logs found for this cycle"}), 404
+
+    log = logs[0].to_dict()
+    alerts = check_log(log, cycle.get("setup", {}))
+
+    report = {
+        "cycle_id": cycle_id,
+        "log_day": log["day"],
+        "log_date": log["date"],
+        "phase": log.get("phase"),
+        "alerts": [
+            {
+                "code": a.code,
+                "severity": a.severity,
+                "message": a.message,
+                "actions_24h": a.actions_24h,
+                "actions_5d": a.actions_5d,
+            }
+            for a in alerts
+        ],
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+    return jsonify(report), 200
