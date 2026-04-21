@@ -45,5 +45,5 @@ export function createLog(data: LogInput): Promise<IrrigationLog> {
 // ── Coach ────────────────────────────────────────────────────────────────────
 
 export function getCoachDiagnosis(cycleId: string): Promise<CoachDiagnosis> {
-  return apiFetch<CoachDiagnosis>(`/cycles/${cycleId}/coach`);
+  return apiFetch<CoachDiagnosis>(`/cycles/coach/today?cycle_id=${cycleId}`);
 }

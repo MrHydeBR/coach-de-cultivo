@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { X, Loader2, CheckCircle2 } from "lucide-react";
-import { createLog } from "@/lib/api";
-import { LogInput } from "@/lib/types";
+import { X, Loader2, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { createLog, getCoachDiagnosis } from "@/lib/api";
+import { LogInput, CoachDiagnosis, CoachAlert } from "@/lib/types";
 
 interface Props {
   cycleId: string;
@@ -13,6 +13,53 @@ interface Props {
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+const severityStyle: Record<CoachAlert["severity"], string> = {
+  danger: "border-red-800/60 bg-red-950/30 text-red-300",
+  warning: "border-amber-800/60 bg-amber-950/30 text-amber-300",
+  info: "border-canopy-800/60 bg-canopy-950/30 text-canopy-300",
+};
+
+const severityIcon = {
+  danger: <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />,
+  warning: <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />,
+  info: <Info className="w-4 h-4 text-canopy-400 shrink-0 mt-0.5" />,
+};
+
+function AlertCard({ alert }: { alert: CoachAlert }) {
+  return (
+    <div className={`rounded-lg border p-3 space-y-2 ${severityStyle[alert.severity]}`}>
+      <div className="flex gap-2 items-start">
+        {severityIcon[alert.severity]}
+        <p className="text-sm font-medium leading-snug">{alert.message}</p>
+      </div>
+      {alert.actions_24h.length > 0 && (
+        <div>
+          <p className="text-xs text-bark-400 mb-1">Próximas 24h</p>
+          <ul className="space-y-0.5">
+            {alert.actions_24h.map((a, i) => (
+              <li key={i} className="text-xs text-bark-200 before:content-['›'] before:mr-1.5 before:text-bark-500">
+                {a}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {alert.actions_5d.length > 0 && (
+        <div>
+          <p className="text-xs text-bark-400 mb-1">Próximos 5 dias</p>
+          <ul className="space-y-0.5">
+            {alert.actions_5d.map((a, i) => (
+              <li key={i} className="text-xs text-bark-200 before:content-['›'] before:mr-1.5 before:text-bark-500">
+                {a}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
@@ -27,7 +74,7 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [diagnosis, setDiagnosis] = useState<CoachDiagnosis | null>(null);
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -51,11 +98,9 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
 
     try {
       await createLog(payload);
-      setSuccess(true);
-      setTimeout(() => {
-        onSuccess?.();
-        onClose();
-      }, 1500);
+      onSuccess?.();
+      const report = await getCoachDiagnosis(cycleId);
+      setDiagnosis(report);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
@@ -68,17 +113,20 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70"
       role="dialog"
       aria-modal="true"
-      aria-label="Registrar rega"
+      aria-label={diagnosis ? "Diagnóstico do Coach" : "Registrar rega"}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full sm:max-w-md bg-bark-950 border border-bark-800 rounded-t-2xl sm:rounded-2xl p-6 space-y-5">
+      <div className="w-full sm:max-w-md bg-bark-950 border border-bark-800 rounded-t-2xl sm:rounded-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-bark-50 text-lg">Registrar Rega</h2>
+          <h2 className="font-bold text-bark-50 text-lg">
+            {diagnosis ? "Diagnóstico do Coach" : "Registrar Rega"}
+          </h2>
           <button
             onClick={onClose}
             tabIndex={0}
-            aria-label="Fechar formulário"
+            aria-label="Fechar"
             className="p-1 rounded-lg text-bark-400 hover:text-bark-100 hover:bg-bark-800 transition-colors"
             onKeyDown={(e) => e.key === "Enter" && onClose()}
           >
@@ -86,14 +134,41 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
           </button>
         </div>
 
-        {success ? (
-          <div className="flex flex-col items-center gap-3 py-6 text-canopy-400">
-            <CheckCircle2 className="w-12 h-12" />
-            <p className="font-semibold text-canopy-300">Rega registrada!</p>
+        {/* Coach report */}
+        {diagnosis ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-canopy-400 text-sm">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Rega do Dia {diagnosis.log_day} salva — {diagnosis.phase === "flower" ? "floração" : "vegetativo"}</span>
+            </div>
+
+            {diagnosis.alerts.length === 0 ? (
+              <div className="rounded-lg border border-canopy-800/60 bg-canopy-950/30 p-4 text-center">
+                <CheckCircle2 className="w-8 h-8 text-canopy-400 mx-auto mb-2" />
+                <p className="text-canopy-300 text-sm font-medium">Tudo dentro do ideal!</p>
+                <p className="text-bark-400 text-xs mt-1">Nenhum alerta para esta rega.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {diagnosis.alerts.map((alert, i) => (
+                  <AlertCard key={i} alert={alert} />
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={onClose}
+              tabIndex={0}
+              aria-label="Fechar diagnóstico"
+              className="w-full py-3 rounded-lg bg-bark-800 hover:bg-bark-700 text-bark-100 font-semibold text-sm transition-colors"
+              onKeyDown={(e) => e.key === "Enter" && onClose()}
+            >
+              Fechar
+            </button>
           </div>
         ) : (
+          /* Form */
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Data */}
             <div>
               <label className="block text-xs text-bark-400 mb-1" htmlFor="log-date">
                 Data *
@@ -108,7 +183,6 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
               />
             </div>
 
-            {/* pH in / EC in */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-bark-400 mb-1" htmlFor="log-ph-in">
@@ -145,7 +219,6 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
               </div>
             </div>
 
-            {/* Volume */}
             <div>
               <label className="block text-xs text-bark-400 mb-1" htmlFor="log-volume">
                 Volume (mL) *
@@ -162,7 +235,6 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
               />
             </div>
 
-            {/* Runoff pH / EC */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-bark-400 mb-1" htmlFor="log-runoff-ph">
@@ -197,7 +269,6 @@ export default function LogForm({ cycleId, onClose, onSuccess }: Props) {
               </div>
             </div>
 
-            {/* Notas */}
             <div>
               <label className="block text-xs text-bark-400 mb-1" htmlFor="log-notes">
                 Notas
